@@ -7,9 +7,13 @@ local fs_utility = require("./utilities/fs_utility")
 local input_dir = "src"
 local output_dir = "out"
 
-local function log(...)
-	stdio.write(table.concat({ ... }, " "))
-	stdio.write("\n")
+local function log(color: stdio.Color, ...)
+	local time = os.date("%H:%M:%S")
+	local message = table.concat({ ... }, " ")
+
+	stdio.write(stdio.color(color))
+	print(`[{time}]: {message}\n`)
+	stdio.write(stdio.color("reset"))
 end
 
 local function compile()
@@ -18,22 +22,28 @@ local function compile()
 		fs.removeDir(output_dir)
 	end
 
-	local darkluaExec = process.exec("darklua", { "process", input_dir, output_dir })
+	local argonSourcemapResult = process.exec("argon", { "build", "-p", "build.project.json" })
 
-	local argonExec = process.exec("argon", { "build", "-p", "build.project.json" })
+	local darkluaProcessResult = process.exec("darklua", { "process", input_dir, output_dir, "--format", "readable" })
 
-	if not darkluaExec.ok then
-		log(`Failed to rebuild due to darklua: {darkluaExec.stderr}`)
+	local argonBuildResult = process.exec("argon", { "build", "-p", "build.project.json" })
+
+	if not argonSourcemapResult.ok then
+		log("red", `Failed to rebuild due to argon: {argonSourcemapResult.stderr}`)
 		return
 	end
-	if not argonExec.ok then
-		log(`Failed to rebuild due to argon: {argonExec.stderr}`)
+	if not darkluaProcessResult.ok then
+		log("red", `Failed to rebuild due to darklua: {darkluaProcessResult.stderr}`)
+		return
+	end
+	if not argonBuildResult.ok then
+		log("red", `Failed to rebuild due to argon: {argonBuildResult.stderr}`)
 		return
 	end
 
-	log(`Rebuilding project`)
+	log("green", `Rebuilding project`)
 end
 
-log(`Started watching at {input_dir}`)
+log("white", `Started watching at {input_dir}`)
 task.spawn(compile)
 task.spawn(fs_utility.watch, input_dir, compile)

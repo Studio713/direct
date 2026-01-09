@@ -24,3 +24,7 @@ argon = { name = "pesde/argon", version = "^2.0.27", target = "lune" }
 [engines]
 pesde = "^0.7.0"
 lune = "^0.10.2"
+
+[dependencies]
+charm = { wally = "littensy/charm", version = "^0.11.0-rc.3" }
+vide = { name = "alicesaidhi/vide", version = "^0.4.1-testing.4" }
