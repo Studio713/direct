@@ -1,6 +1,13 @@
+local RunService = game:GetService("RunService")
+
+local environment = require("@core/environment")
+local evaluator = require("@core/evaluator")
 local playback = require("@core/playback")
+local timeline = require("@core/timeline")
 local charm = require("@pkgs/charm")
+local janitor = require("@pkgs/janitor")
 local plugin_state = require("@src/plugin_state")
+local save_utility = require("@src/utilities/save_utility")
 
 -- Function Alias
 local subscribe = charm.subscribe
@@ -33,6 +40,12 @@ local function makeDockWidget()
 end
 
 function main()
+	local cleaner = janitor.new()
+
+	plugin.Unloading:Once(function()
+		cleaner:Destroy()
+	end)
+
 	local toolbar = plugin:CreateToolbar("Direct")
 	local button = toolbar:CreateButton("direct", "Open Cutscene Director", "", "Direct")
 
@@ -41,23 +54,71 @@ function main()
 	local playButton = Instance.new("TextButton")
 	playButton.Size = UDim2.fromScale(1, 1)
 
-	playButton.Activated:Connect(function()
-		playback.play()
-	end)
+	cleaner:Add(playButton.Activated:Connect(function()
+		plugin_state.currentFrame(0)
+		if not plugin_state.isPlaying() then
+			playback.start()
+		else
+			playback.stop()
+		end
+	end))
 
 	playButton.Parent = widget
 
-	button.Click:Connect(function()
+	cleaner:Add(button.Click:Connect(function()
 		local enabled = plugin_state.enabled()
 
 		plugin_state.enabled(not enabled)
-	end)
+	end))
 
-	subscribe(plugin_state.enabled, function(enabled)
+	cleaner:Add(RunService.Heartbeat:Connect(function()
+		if not plugin_state.isPlaying() then
+			return
+		end
+
+		local tl = plugin_state.loadedCutscene()
+		if not tl then
+			return
+		end
+
+		local env = plugin_state.cutsceneEnvironment()
+		local frame = plugin_state.currentFrame()
+
+		if frame >= tl.length then
+			playback.stop()
+			return
+		end
+
+		local evaluation = evaluator.evaluate(tl, frame)
+		if evaluation then
+			env:apply(evaluation)
+			plugin_state.currentFrame(frame + 1)
+		end
+	end))
+
+	cleaner:Add(subscribe(plugin_state.enabled, function(enabled)
 		button:SetActive(enabled)
 		widget.Enabled = enabled
-	end)
+	end))
 
+	cleaner:Add(subscribe(plugin_state.selectedCutscene, function(cutscene)
+		local prevEnv = plugin_state.cutsceneEnvironment()
+		if prevEnv then
+			prevEnv:destroy()
+		end
+
+		local tl = timeline.load(cutscene)
+		local env = environment.new(tl.actors)
+
+		plugin_state.currentFrame(0)
+		plugin_state.loadedCutscene(tl)
+		plugin_state.cutsceneEnvironment(env)
+	end))
+
+	save_utility.loadSaves()
+
+	-- Testing
+	plugin_state.selectedCutscene("test_cutscene")
 	print("Successfully built plugin")
 end
 

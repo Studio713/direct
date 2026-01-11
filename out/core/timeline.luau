@@ -1,35 +1,42 @@
-local plugin_state = require(script.Parent.Parent.plugin_state)
 local save_utility = require(script.Parent.Parent.utilities.save_utility)
 local timeline = {}
 
 timeline.__index = timeline
 
+local function applyMetatable(tl)
+    local self = setmetatable(tl, timeline)
+
+    return self
+end
 local function createTimeline(createFile)
-    local self = setmetatable({}, timeline)
+    local tl = {}
+
+    tl.actors = {}
+    tl.id = 'unnamed'
+    tl.length = 60
+
+    local self = applyMetatable(tl)
 
     if createFile then
-        save_utility.save(self)
+        save_utility.getSave(self.id):save()
     end
-
-    self.actors = {}
-    self.tracks = {}
-    self.id = 'unnamed'
-    self.length = 60
 
     return self
 end
 
-function timeline.new()
-    local tl = createTimeline(true)
-
-    plugin_state.selectedCutscene(tl.id)
-
-    return tl
-end
 function timeline.load(name)
-    local tl = createTimeline(false)
+    local tl
 
-    plugin_state.selectedCutscene(name)
+    if not name then
+        return createTimeline(true)
+    end
+    if save_utility.saveExists(name) then
+        local save = save_utility.getSave(name)
+
+        tl = applyMetatable(save.data)
+    else
+        tl = createTimeline(true)
+    end
 
     return tl
 end

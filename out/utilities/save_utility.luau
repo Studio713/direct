@@ -48,11 +48,17 @@ end
 local utility = {}
 local cache = {}
 
+local function createSavesFolder()
+    return create('Folder')({
+        Name = DIRECT_PLUGIN_SAVES,
+        Parent = ServerStorage,
+    })
+end
 local function getSavesFolder()
     local saves = ServerStorage:FindFirstChild(DIRECT_PLUGIN_SAVES)
 
     if not saves then
-        saves = utility.createSavesFolder()
+        saves = createSavesFolder()
     end
 
     return saves
@@ -71,26 +77,10 @@ local function createSave(name)
     return save
 end
 
-function utility.createSavesFolder()
-    return create('Folder')({
-        Name = DIRECT_PLUGIN_SAVES,
-        Parent = ServerStorage,
-    })
+function utility.saveExists(name)
+    return cache[name] ~= nil
 end
 function utility.getSaves()
-    local saves = getSavesFolder()
-
-    for _, module in (saves):GetChildren()do
-        if not module:IsA('ModuleScript') then
-            continue
-        end
-        if cache[module.Name] then
-            continue
-        end
-
-        cache[module.Name] = saveFile.new(module)
-    end
-
     return cache
 end
 function utility.getSave(name)
@@ -103,6 +93,19 @@ function utility.getSave(name)
 
     return save
 end
-function utility.save(timeline) end
+function utility.loadSaves()
+    local saves = getSavesFolder()
+
+    for _, module in (saves):GetChildren()do
+        if not module:IsA('ModuleScript') then
+            continue
+        end
+        if cache[module.Name] then
+            continue
+        end
+
+        cache[module.Name] = saveFile.new(module)
+    end
+end
 
 return utility

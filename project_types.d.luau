@@ -1,3 +1,20 @@
+export type InterpolationMode = "Linear" | "Step"
+
+export type InterpolationType = number | Vector3 | CFrame
+
+export type ModifiableProperties = "CFrame" | "Position" | "Rotation"
+
+export type DirectFrame = {
+	time: number,
+	targets: {
+		[string]: Target,
+	},
+}
+
+export type Target = {
+	[string]: InterpolationType,
+}
+
 export type DirectActor = {
 	id: string,
 	name: string,
@@ -7,20 +24,18 @@ export type DirectActor = {
 		path: string, -- Asset path
 	},
 
-	tracks: { string }, -- Track IDs
+	track: { Track },
 }
 
-export type Keyframe<T = any> = {
+export type Keyframe<T = InterpolationType> = {
 	time: number, -- Seconds from timeline start
 	value: T, -- Track-defined payload
 }
 
 export type Track = {
-	id: string,
-
-	type: "",
-
+	property: ModifiableProperties,
 	keyframes: { Keyframe },
+	interpolation: InterpolationMode,
 }
 
 export type TimelineImpl = {
@@ -31,8 +46,7 @@ export type TimelineImpl = {
 export type Timeline = setmetatable<SaveData, TimelineImpl>
 
 export type SaveData = {
-	actors: { [string]: DirectActor }, -- Actor ID -> Actor
-	tracks: { [string]: Track }, -- Track ID -> Track
+	actors: { [string]: DirectActor },
 	id: string,
 	length: number,
 }
@@ -47,5 +61,17 @@ export type Save = setmetatable<{
 }, SaveImpl>
 
 export type Saves = { [string]: Save }
+
+export type EnvironmentData = {
+	instances: { [string]: Instance },
+	cleanup: { Instance },
+}
+export type EnvironmentImpl = {
+	__index: EnvironmentImpl,
+	new: (actors: { [string]: DirectActor }) -> Environment,
+	apply: (self: Environment, frame: DirectFrame) -> (),
+	destroy: (self: Environment) -> (),
+}
+export type Environment = setmetatable<EnvironmentData, EnvironmentImpl>
 
 return nil
