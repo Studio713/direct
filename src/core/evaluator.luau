@@ -1,4 +1,4 @@
-local ProximityPromptService = game:GetService("ProximityPromptService")
+local easing_utility = require("@src/utilities/easing_utility")
 local evaluator = {}
 
 local function clampTime(t: number, duration: number)
@@ -27,17 +27,17 @@ local function getSurroundingKeyframes(keyframes: { Keyframe }, time: number)
 	return keyframes[left - 1], keyframes[left]
 end
 
-local function interpolate(a: InterpolationType, b: InterpolationType, t: number, mode: InterpolationMode)
+local function interpolate(a: InterpolationType, b: InterpolationType, alpha: number, mode: InterpolationMode)
 	if mode == "Step" then
 		return a
 	end
 
 	if typeof(a) == "number" and typeof(b) == "number" then
-		return a + (b - a) * t
+		return a + (b - a) * alpha
 	elseif typeof(a) == "Vector3" and typeof(b) == "Vector3" then
-		return (a):Lerp(b, t)
+		return (a):Lerp(b, alpha)
 	elseif typeof(a) == "CFrame" and typeof(b) == "CFrame" then
-		return (a):Lerp(b, t)
+		return (a):Lerp(b, alpha)
 	end
 
 	error("Unsupported interpolation type")
@@ -60,7 +60,8 @@ local function evaluateTrack(track: Track, time: number): InterpolationType
 	end
 
 	local keyframeA: Keyframe, keyframeB: Keyframe = getSurroundingKeyframes(keyframes, time)
-	local alpha = (time - keyframeA.time) / (keyframeB.time - keyframeA.time)
+	local rawAlpha = (time - keyframeA.time) / (keyframeB.time - keyframeA.time)
+	local alpha = easing_utility.ease(rawAlpha, track.easingStyle, track.easingDirection)
 
 	return interpolate(keyframeA.value, keyframeB.value, alpha, track.interpolation or "Linear")
 end

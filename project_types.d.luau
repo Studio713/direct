@@ -1,3 +1,7 @@
+export type EasingStyle = "Linear"
+
+export type EasingDirection = "In" | "Out" | "InOut"
+
 export type InterpolationMode = "Linear" | "Step"
 
 export type InterpolationType = number | Vector3 | CFrame
@@ -34,6 +38,8 @@ export type Keyframe<T = InterpolationType> = {
 
 export type Track = {
 	property: ModifiableProperties,
+	easingStyle: EasingStyle,
+	easingDirection: EasingDirection,
 	keyframes: { Keyframe },
 	interpolation: InterpolationMode,
 }
