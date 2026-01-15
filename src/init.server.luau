@@ -8,6 +8,7 @@ local charm = require("@pkgs/charm")
 local janitor = require("@pkgs/janitor")
 local plugin_state = require("@src/plugin_state")
 local save_utility = require("@src/utilities/save_utility")
+local mount_app = require("@ui/mount_app")
 
 -- Function Alias
 local subscribe = charm.subscribe
@@ -51,19 +52,7 @@ function main()
 
 	local widget = makeDockWidget()
 
-	local playButton = Instance.new("TextButton")
-	playButton.Size = UDim2.fromScale(1, 1)
-
-	cleaner:Add(playButton.Activated:Connect(function()
-		plugin_state.currentFrame(0)
-		if not plugin_state.isPlaying() then
-			playback.start()
-		else
-			playback.stop()
-		end
-	end))
-
-	playButton.Parent = widget
+	cleaner:Add(mount_app(widget))
 
 	cleaner:Add(button.Click:Connect(function()
 		local enabled = plugin_state.enabled()

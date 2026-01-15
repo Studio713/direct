@@ -7,6 +7,7 @@ local charm = require(script.packages.charm)
 local janitor = require(script.packages.janitor)
 local plugin_state = require(script.plugin_state)
 local save_utility = require(script.utilities.save_utility)
+local mount_app = require(script.ui.mount_app)
 local subscribe = charm.subscribe
 
 local function makeDockWidget()
@@ -36,22 +37,8 @@ function main()
     local toolbar = plugin:CreateToolbar('Direct')
     local button = toolbar:CreateButton('direct', 'Open Cutscene Director', '', 'Direct')
     local widget = makeDockWidget()
-    local playButton = Instance.new('TextButton')
 
-    playButton.Size = UDim2.fromScale(1, 1)
-
-    cleaner:Add(playButton.Activated:Connect(function()
-        plugin_state.currentFrame(0)
-
-        if not plugin_state.isPlaying() then
-            playback.start()
-        else
-            playback.stop()
-        end
-    end))
-
-    playButton.Parent = widget
-
+    cleaner:Add(mount_app(widget))
     cleaner:Add(button.Click:Connect(function()
         local enabled = plugin_state.enabled()
 

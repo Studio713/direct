@@ -8,6 +8,7 @@
     "src": "src",
     "pkgs": "roblox_packages",
     "core": "src/core",
+    "ui": "src/ui",
     "templates": "src/templates"
   }
 }

@@ -1,3 +1,26 @@
+-- UI
+type Derivable<T> = T | () -> T
+
+export type DividerProps = {
+	direction: "vertical" | "horizontal",
+	size: Derivable<UDim2>?,
+	order: Derivable<number>?,
+	color: Derivable<Color3>?,
+
+	[number]: any?,
+}
+
+export type AdjustableDividerProps = {
+	direction: "vertical" | "horizontal",
+	source: (() -> number) & ((number) -> number),
+	min: number,
+	max: number,
+	size: Derivable<UDim2>?,
+	order: Derivable<number>?,
+	color: Derivable<Color3>?,
+}
+
+-- Plugin
 export type EasingStyle = "Linear"
 
 export type EasingDirection = "In" | "Out" | "InOut"
