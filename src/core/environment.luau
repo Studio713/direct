@@ -1,4 +1,3 @@
-local ReflectionService = game:GetService("ReflectionService")
 local instance_utility = require("@src/utilities/instance_utility")
 local environment = {} :: EnvironmentImpl
 environment.__index = environment

@@ -22,7 +22,7 @@ local function compile()
 		fs.removeDir(output_dir)
 	end
 
-	local argonSourcemapResult = process.exec("argon", { "build", "-p", "build.project.json" })
+	local argonSourcemapResult = process.exec("argon", { "sourcemap", "-o", "sourcemap.json" })
 
 	local darkluaProcessResult = process.exec("darklua", { "process", input_dir, output_dir, "--format", "readable" })
 

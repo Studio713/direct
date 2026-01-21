@@ -1,12 +1,10 @@
 local template = {}
 
 template.defaultSaveFile = "return {\n"
-	.. "\ttimeline = {\n"
-	.. "\t\tactors = {\n\t\t},\n"
-	.. "\t\ttracks = {\n\t\t},\n"
-	.. '\t\tid = "unnamed",\n'
-	.. "\t\tlength = 60,\n"
-	.. "\t},\n"
-	.. "}\n"
+	.. "\tactors = {\n\t\t},\n"
+	.. "\ttracks = {\n\t\t},\n"
+	.. '\tid = "unnamed",\n'
+	.. "\tlength = 60,\n"
+	.. "},\n"
 
 return template

@@ -8,10 +8,12 @@ local create = vide.create
 
 local DIRECT_PLUGIN_SAVES = "direct_cutscenes_saves"
 
+local cache: Saves = {}
+
 local saveFile = {} :: SaveImpl
 saveFile.__index = saveFile
 
-local function serialize(value, indent: number?): string
+local function serialize(value: any, indent: number?): string
 	indent = indent or 0
 	local pad = string.rep("\t", indent)
 
@@ -23,6 +25,25 @@ local function serialize(value, indent: number?): string
 			out = `{out}{pad}\t{key} = {serialize(v, indent + 1)},\n`
 		end
 		return `{out}{pad}}`
+	elseif typeof(value) == "CFrame" then
+		-- Decompose into full 12-number constructor (position + rotation matrix)
+		local x, y, z, r00, r01, r02, r10, r11, r12, r20, r21, r22 = value:GetComponents()
+
+		return string.format(
+			"CFrame.new(%g, %g, %g, %g, %g, %g, %g, %g, %g, %g, %g, %g)",
+			x,
+			y,
+			z,
+			r00,
+			r01,
+			r02,
+			r10,
+			r11,
+			r12,
+			r20,
+			r21,
+			r22
+		)
 	elseif typeof(value) == "string" then
 		return string.format("%q", value)
 	elseif typeof(value) == "number" or typeof(value) == "boolean" then
@@ -45,11 +66,15 @@ function saveFile.save(self: Save)
 	local luaSource = "return " .. serialize(self.data)
 
 	self.module.Source = luaSource
+	self.module.Name = self.data.id
+	cache[self.data.id] = self
+end
+
+function saveFile.reload(self: Save)
+	self.data = (require :: any)(self.module) :: SaveData
 end
 
 local utility = {}
-
-local cache: Saves = {}
 
 local function createSavesFolder()
 	return create("Folder")({
@@ -101,6 +126,10 @@ function utility.getSave(name: string)
 	end
 
 	return save
+end
+
+function utility.removeSave(name: string)
+	cache[name] = nil
 end
 
 function utility.loadSaves()

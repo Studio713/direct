@@ -1,4 +1,8 @@
+local playback = require("@core/playback")
 local vide = require("@pkgs/vide")
+local vide_charm = require("@pkgs/vide-charm")
+local plugin_state = require("@src/plugin_state")
+local save_utility = require("@src/utilities/save_utility")
 local adjustable_divider = require("@ui/components/shared/adjustable_divider")
 
 -- Function Alias
@@ -6,9 +10,15 @@ local scale = UDim2.fromScale
 local create = vide.create
 local mount = vide.mount
 local source = vide.source
+local changed = vide.changed
+local useSignal = vide_charm.useSignalState
 
-local function app()
+local function app(props: AppProps)
+	local loadedTimeline = useSignal(plugin_state.loadedCutscene)
+	local currentFrame = useSignal(plugin_state.currentFrame)
+
 	local shrink = source(2)
+	local isPlaying = source(false)
 
 	-- App needs to show timeline
 	-- list of actors
@@ -77,10 +87,30 @@ local function app()
 						Size = UDim2.new(0.8, 0, 0, 20),
 
 						create("TextBox")({
-							-- Text = "", -- current timeline
+							Text = function()
+								local timeline = loadedTimeline()
+								if not timeline then
+									return ""
+								end
+
+								return `{timeline.id}`
+							end,
 							PlaceholderText = "Select a Timeline",
 							TextSize = 20,
 							TextXAlignment = Enum.TextXAlignment.Left,
+							ClipsDescendants = true,
+							changed("Text", function(text)
+								local timeline = plugin_state.loadedCutscene()
+								if timeline then
+									local save = save_utility.getSave(timeline.id)
+									if not save then
+										return
+									end
+									save_utility.removeSave(timeline.id)
+									timeline.id = text
+									save:save()
+								end
+							end),
 							AnchorPoint = Vector2.new(0.5, 0.5),
 							Position = scale(0.5, 0.5),
 							Size = UDim2.new(1, -10, 1, 0),
@@ -94,6 +124,10 @@ local function app()
 						-- ... Button
 						Size = scale(0.2, 1),
 
+						Activated = function()
+							props.menu:ShowAsync()
+						end,
+
 						create("UIAspectRatioConstraint")({}),
 					}),
 				}),
@@ -102,6 +136,20 @@ local function app()
 					Name = "PlayButtonContainer",
 					BackgroundColor3 = Color3.fromRGB(125, 255, 160),
 					Size = scale(0.2, 1),
+
+					Activated = function()
+						if not loadedTimeline() then
+							return
+						end
+
+						if not isPlaying() then
+							isPlaying(true)
+							playback.start()
+						else
+							isPlaying(false)
+							playback.stop()
+						end
+					end,
 
 					create("UIAspectRatioConstraint")({}),
 				}),
@@ -115,6 +163,28 @@ local function app()
 						FlexMode = Enum.UIFlexMode.Custom,
 						GrowRatio = 0.5,
 					}),
+					create("UIListLayout")({
+						FillDirection = Enum.FillDirection.Horizontal,
+					}),
+					-- create("UIPadding")({
+					-- 	PaddingRight = UDim.new(0, 5),
+					-- }),
+
+					create("TextBox")({
+						Text = function()
+							return `{currentFrame()}`
+						end,
+						TextScaled = true,
+						TextXAlignment = Enum.TextXAlignment.Right,
+						Size = scale(0.5, 1),
+					}),
+					create("TextLabel")({
+						Text = function()
+							return `/ {3600}`
+						end,
+						TextScaled = true,
+						Size = scale(0.5, 1),
+					}),
 				}),
 			}),
 		}),
@@ -127,8 +197,10 @@ local function app()
 	})
 end
 
-local function mountApp(parent: Instance)
-	return mount(app, parent)
+local function mountApp(parent: Instance, props: AppProps)
+	return mount(function()
+		return app(props)
+	end, parent)
 end
 
 return mountApp

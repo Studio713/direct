@@ -3,6 +3,7 @@ local vide = require(script.Parent.Parent.packages.vide)
 local save_template = require(script.Parent.Parent.templates.save_template)
 local create = vide.create
 local DIRECT_PLUGIN_SAVES = 'direct_cutscenes_saves'
+local cache = {}
 local saveFile = {}
 
 saveFile.__index = saveFile
@@ -22,6 +23,10 @@ local function serialize(value, indent)
         end
 
         return `{out}{pad}}`
+    elseif typeof(value) == 'CFrame' then
+        local x, y, z, r00, r01, r02, r10, r11, r12, r20, r21, r22 = value:GetComponents()
+
+        return string.format('CFrame.new(%g, %g, %g, %g, %g, %g, %g, %g, %g, %g, %g, %g)', x, y, z, r00, r01, r02, r10, r11, r12, r20, r21, r22)
     elseif typeof(value) == 'string' then
         return string.format('%q', value)
     elseif typeof(value) == 'number' or typeof(value) == 'boolean' then
@@ -43,10 +48,14 @@ function saveFile.save(self)
     local luaSource = 'return ' .. serialize(self.data)
 
     self.module.Source = luaSource
+    self.module.Name = self.data.id
+    cache[self.data.id] = self
+end
+function saveFile.reload(self)
+    self.data = ((require)(self.module))
 end
 
 local utility = {}
-local cache = {}
 
 local function createSavesFolder()
     return create('Folder')({
@@ -92,6 +101,9 @@ function utility.getSave(name)
     end
 
     return save
+end
+function utility.removeSave(name)
+    cache[name] = nil
 end
 function utility.loadSaves()
     local saves = getSavesFolder()

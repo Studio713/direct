@@ -38,6 +38,8 @@ function timeline.load(name)
         tl = createTimeline(true)
     end
 
+    print('loaded timeline')
+
     return tl
 end
 

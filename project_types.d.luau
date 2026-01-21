@@ -20,6 +20,12 @@ export type AdjustableDividerProps = {
 	color: Derivable<Color3>?,
 }
 
+export type AppProps = {
+	toolbar: PluginToolbar,
+	menu: PluginMenu,
+	button: PluginToolbarButton,
+}
+
 -- Plugin
 export type EasingStyle = "Linear"
 
@@ -83,6 +89,7 @@ export type SaveImpl = {
 	__index: SaveImpl,
 	new: (module: ModuleScript) -> Save,
 	save: (self: Save) -> (),
+	reload: (self: Save) -> (),
 }
 export type Save = setmetatable<{
 	data: SaveData,
